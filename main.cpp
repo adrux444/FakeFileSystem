@@ -10,6 +10,8 @@
 #include <filesystem>  // file system needs cpp standard 17 or above.  This is enabled in this project, but if you recreated from scratch, set -std=c++17 flags
 #include "systemItem.h"
 #include "commands.h"
+#include "directories.h"
+#include "files.h"
 
 using namespace std;
 
