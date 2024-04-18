@@ -130,11 +130,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="commands.cpp" />
+    <ClCompile Include="Directories.cpp" />
+    <ClCompile Include="Files.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="systemItem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="commands.h" />
+    <ClInclude Include="Directories.h" />
+    <ClInclude Include="Files.h" />
     <ClInclude Include="systemItem.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
