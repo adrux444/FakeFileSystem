@@ -1,4 +1,6 @@
 #include "commands.h"
+#include "directories.h"
+#include "files.h"
 #include <iostream>
 #include <sstream>
 #include <iterator>
@@ -12,7 +14,7 @@
 
 using namespace std;
 
-void initializeItems(const std::string& path, std::vector<systemItem*>& items);
+void initializeItems(const string& path, Directory* currentDir) {}
 
 
 bool compareBySize(const systemItem* a, const systemItem* b) {
@@ -35,10 +37,10 @@ bool compareBySize(const systemItem* a, const systemItem* b) {
     return (a->getSize() < b->getSize());
 }
 
-std::string toLower(const std::string& str) {
-    std::string result = str;
-    std::transform(result.begin(), result.end(), result.begin(),
-        [](unsigned char c) { return std::tolower(c); });
+string toLower(const string& str) {
+    string result = str;
+    transform(result.begin(), result.end(), result.begin(),
+        [](unsigned char c) { return tolower(c); });
     return result;
 }
 
@@ -52,14 +54,14 @@ bool compareByName(const systemItem* a, const systemItem* b) {
 
 
 
-void executeCommand(const std::string& command, std::vector<systemItem*>& items, std::string& path) {
-    std::istringstream iss(command);
-    std::vector<std::string> tokens{ std::istream_iterator<std::string>{iss}, std::istream_iterator<std::string>{} };
+void executeCommand(const string& command, vector<Directory*>& items, string& path) {
+    istringstream iss(command);
+    vector<string> tokens{ istream_iterator<string>{iss}, istream_iterator<string>{} };
 
     bool sortedBySize = false;
     bool sortedByName = false;
 
-    std::string cmd = tokens[0];
+    string cmd = tokens[0];
 
     if (cmd == "dir") {
         __int64 totSize = 0;
@@ -81,7 +83,7 @@ void executeCommand(const std::string& command, std::vector<systemItem*>& items,
     }
 
     else if (cmd == "sortsize") {
-        std::sort(items.begin(), items.end(), compareBySize);
+        sort(items.begin(), items.end(), compareBySize);
         __int64 totSize = 0;
         __int64 totFiles = 0;
         __int64 totDirs = 0;
@@ -102,7 +104,7 @@ void executeCommand(const std::string& command, std::vector<systemItem*>& items,
     }
 
     else if (cmd == "sortname") {
-        std::sort(items.begin(), items.end(), compareByName);
+        sort(items.begin(), items.end(), compareByName);
         __int64 totSize = 0;
         __int64 totFiles = 0;
         __int64 totDirs = 0;
@@ -157,82 +159,82 @@ void executeCommand(const std::string& command, std::vector<systemItem*>& items,
 
     else if (cmd == "mkdir") {
         if (tokens.size() > 1) {
-            std::string dirname = tokens[1];
+            string dirname = tokens[1];
 
-            std::filesystem::path newDirPath = path + "\\" + dirname;
-            if (!std::filesystem::exists(newDirPath)) {
-                if (std::filesystem::create_directory(newDirPath)) {
-                    std::cout << "Directory '" << dirname << "' created successfully." << std::endl;
+            filesystem::path newDirPath = path + "\\" + dirname;
+            if (!filesystem::exists(newDirPath)) {
+                if (filesystem::create_directory(newDirPath)) {
+                    cout << "Directory '" << dirname << "' created successfully." << endl;
 
                     Directory* newDirItem = new Directory(dirname, true, "<DIR>", "");
                     items.push_back(newDirItem);
                 }
                 else {
-                    std::cout << "Failed to create directory '" << dirname << "'." << std::endl;
+                    cout << "Failed to create directory '" << dirname << "'." << endl;
                 }
             }
             else {
-                std::cout << "Directory '" << dirname << "' already exists." << std::endl;
+                cout << "Directory '" << dirname << "' already exists." << endl;
             }
         }
         else {
-            std::cout << "Invalid command: mkdir requires a directory name." << std::endl;
+            cout << "Invalid command: mkdir requires a directory name." << endl;
         }
     }
 
     else if (cmd == "mkfile") {
         if (tokens.size() > 1) {
-            std::string filename = tokens[1];
+            string filename = tokens[1];
 
-            std::filesystem::path newFilePath = std::filesystem::path(path) / filename;
-            std::string fileSize = std::to_string(rand() % 1000 + 1);
+            filesystem::path newFilePath = filesystem::path(path) / filename;
+            string fileSize = to_string(rand() % 1000 + 1);
 
-            if (!std::filesystem::exists(newFilePath)) {
-                std::ofstream newFile(newFilePath);
+            if (!filesystem::exists(newFilePath)) {
+                ofstream newFile(newFilePath);
                 if (newFile.is_open()) {
                     newFile.close();
-                    std::cout << "File '" << filename << "' created successfully." << std::endl;
+                    cout << "File '" << filename << "' created successfully." << endl;
                     File* newFileItem = new File(filename, false, fileSize, "");
                     items.push_back(newFileItem);
                 }
                 else {
-                    std::cout << "Failed to create file '" << filename << "'." << std::endl;
+                    cout << "Failed to create file '" << filename << "'." << endl;
                 }
             }
             else {
-                std::cout << "File '" << filename << "' already exists." << std::endl;
+                cout << "File '" << filename << "' already exists." << endl;
             }
         }
         else {
-            std::cout << "Invalid command: mkfile requires a file name." << std::endl;
+            cout << "Invalid command: mkfile requires a file name." << endl;
         }
     }
 
     else if (cmd == "del") {
         if (tokens.size() > 1) {
-            std::string name = tokens[1];
+            string name = tokens[1];
 
-            std::filesystem::path itemPath = std::filesystem::path(path) / name;
+            filesystem::path itemPath = filesystem::path(path) / name;
 
-            if (std::filesystem::exists(itemPath)) {
-                std::error_code ec;
-                if (std::filesystem::remove(itemPath, ec)) {
-                    std::cout << "Deleted '" << name << "' successfully." << std::endl;
+            if (filesystem::exists(itemPath)) {
+                error_code ec;
+                if (filesystem::remove(itemPath, ec)) {
+                    cout << "Deleted '" << name << "' successfully." << endl;
 
-                    items.erase(std::remove_if(items.begin(), items.end(), [&](const systemItem* item) {
+                    items.erase(remove_if(items.begin(), items.end(), [&](const systemItem* item) {
                         return item->getName() == name;
                         }), items.end());
                 }
                 else {
-                    std::cout << "Failed to delete '" << name << "'. " << ec.message() << std::endl;
+                    cout << "Failed to delete '" << name << "'. " << ec.message() << endl;
                 }
             }
             else {
-                std::cout << "File or directory '" << name << "' not found." << std::endl;
+                cout << "File or directory '" << name << "' not found." << endl;
             }
         }
         else {
-            std::cout << "Invalid command: del requires a file or directory name." << std::endl;
+            cout << "Invalid command: del requires a file or directory name." << endl;
         }
     }
     else if (cmd == "help") {
@@ -250,7 +252,7 @@ void executeCommand(const std::string& command, std::vector<systemItem*>& items,
     else if (cmd == "exit") {
     }
     else {
-        std::cout << "Unknown command: " << cmd << std::endl;
+        cout << "Unknown command: " << cmd << endl;
     }
 
     if (cmd == "exit") {

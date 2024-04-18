@@ -18,38 +18,38 @@ using namespace std;
 // function prototype of a helper method to convert timestamps
 const tm convertTime(const filesystem::file_time_type& timestamp);
 
-void initializeItems(const std::string& path, std::vector<systemItem*>& items) {
+void initializeItems(const std::string& path, Directory* currentDir) {
+    try {
+        for (const auto& item : filesystem::directory_iterator(path))
+        {
+            if (item.is_directory()) // check if this is a directory
+            {
+                string name = item.path().filename().string();
+                tm timestamp = convertTime(item.last_write_time());
 
-    for (auto item : items) {
-        delete item;
+                string dateTime = to_string(timestamp.tm_mday) + "/" + to_string(timestamp.tm_mon + 1) + "/" + to_string(timestamp.tm_year + 1900) + " " + to_string(timestamp.tm_hour) + ":" + to_string(timestamp.tm_min);
+
+                Directory* dirItem = new Directory(name, true, " <DIR> ", dateTime);
+                currentDir->addSubDirectory(dirItem);
+            }
+            else
+            {
+                string tmp = item.path().filename().string();
+                const char* name = tmp.c_str();
+                tm timestamp = convertTime(item.last_write_time());
+                string dateTime = to_string(timestamp.tm_mday) + "/" + to_string(timestamp.tm_mon + 1) + "/" + to_string(timestamp.tm_year + 1900) + " " + to_string(timestamp.tm_hour) + ":" + to_string(timestamp.tm_min);
+
+                __int64 filesize = item.file_size();
+                string size = to_string(filesize);
+
+                File* fileItem = new File(name, false, size, dateTime);
+                currentDir->addFile(fileItem);
+            }
+        }
     }
-    items.clear();
-
-    for (const filesystem::directory_entry& item : filesystem::directory_iterator(path))
+    catch (const filesystem::filesystem_error& e)
     {
-        if (item.is_directory()) // check if this is a directory
-        {
-            string name = item.path().filename().string();
-            tm timestamp = convertTime(item.last_write_time());
-
-            string dateTime = to_string(timestamp.tm_mday) + "/" + to_string(timestamp.tm_mon + 1) + "/" + to_string(timestamp.tm_year + 1900) + " " + to_string(timestamp.tm_hour) + ":" + to_string(timestamp.tm_min);
-
-            Directory* dirItem = new Directory(name, true, " <DIR> ", dateTime);
-            items.push_back(dirItem);
-        }
-        else
-        {
-            string tmp = item.path().filename().string();
-            const char* name = tmp.c_str();
-            tm timestamp = convertTime(item.last_write_time());
-            string dateTime = to_string(timestamp.tm_mday) + "/" + to_string(timestamp.tm_mon + 1) + "/" + to_string(timestamp.tm_year + 1900) + " " + to_string(timestamp.tm_hour) + ":" + to_string(timestamp.tm_min);
-
-            __int64 filesize = item.file_size();
-            string size = to_string(filesize);
-
-            File* fileItem = new File(name, false, size, dateTime);
-            items.push_back(fileItem);
-        }
+        cerr << "Error: " << e.what() << endl;
     }
 }
 
@@ -65,28 +65,24 @@ int main()
 #endif
 
     // root path to enumerate
-    std::string path = "."; // this is just the local path, so the project folder
+    string rootPath = ".";
+    Directory* rootDir = new Directory(rootPath, true, " <DIR> ", "");
+    cout << "Starting initialisation, please wait ...\n";
 
-
-
-    vector<systemItem*> items;
-
-    initializeItems(path, items);
+    initializeItems(rootPath, rootDir);
     cout << "Initialisation complete..." << endl;
 
     while (true) {
         std::string userInput;
-        std::cout << path << " :> ";
+        std::cout << rootPath << " :> ";
         std::getline(std::cin, userInput);
 
-        std::string cmdPath = path;
-        executeCommand(userInput, items, path);
+        std::vector<Directory*> items;
+
+        executeCommand(userInput, items, rootPath);
 
 
         if (userInput == "exit") {
-            for (auto item = items.begin(); item != items.end();) {
-                item = items.erase(item);
-            }
             break;
         }
     }
