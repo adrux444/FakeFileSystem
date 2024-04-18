@@ -12,7 +12,7 @@
 
 using namespace std;
 
-void initializeItems(const filesystem::path& rootPath, Directory& rootDirectory);
+void initializeItems(const std::string& path, std::vector<systemItem*>& items);
 
 
 bool compareBySize(const systemItem* a, const systemItem* b) {
@@ -47,12 +47,12 @@ bool compareByName(const systemItem* a, const systemItem* b) {
     if ((a->isDirectory() && b->isDirectory()) || (!a->isDirectory() && !b->isDirectory())) {
         return toLower(a->getName()) < toLower(b->getName());
     }
-    return a->isDirectory(); 
+    return a->isDirectory();
 }
 
 
 
-void executeCommand(const std::string& command, Directory items, std::string& path) {
+void executeCommand(const std::string& command, std::vector<systemItem*>& items, std::string& path) {
     std::istringstream iss(command);
     std::vector<std::string> tokens{ std::istream_iterator<std::string>{iss}, std::istream_iterator<std::string>{} };
 
@@ -61,22 +61,19 @@ void executeCommand(const std::string& command, Directory items, std::string& pa
 
     std::string cmd = tokens[0];
 
-    auto& subDirs = items.getSubDirectories();
-    auto& files = items.getFiles();
-
     if (cmd == "dir") {
         __int64 totSize = 0;
         __int64 totFiles = 0;
         __int64 totDirs = 0;
-        for (const auto& dir : subDirs) {
-            cout << dir->getDate() << "\t\t" << dir->getSize() << "\t" << dir->getName() << "\n";
-            totDirs++;
-        }
-
-        for (const auto& file : files) {
-            cout << file->getDate() << "\t\t" << file->getSize() << "\t" << file->getName() << "\n";
-            totFiles++;
-            totSize += stoi(file->getSize());
+        for (const auto& item : items) {
+            cout << item->getDate() << "\t\t" << item->getSize() << "\t" << item->getName() << "\n";
+            if (!item->isDirectory()) {
+                totFiles++;
+                totSize += stoi(item->getSize());
+            }
+            else {
+                totDirs++;
+            }
         }
         cout << "\t" << totFiles << " File(s)\t" << totSize << " total bytes\n";
         cout << "\t" << totDirs << " Dir(s) \n";
@@ -84,23 +81,20 @@ void executeCommand(const std::string& command, Directory items, std::string& pa
     }
 
     else if (cmd == "sortsize") {
-        std::sort(subDirs.begin(), subDirs.end(), compareBySize);
-        std::sort(files.begin(), files.end(), compareBySize);
+        std::sort(items.begin(), items.end(), compareBySize);
         __int64 totSize = 0;
         __int64 totFiles = 0;
         __int64 totDirs = 0;
-
-        for (const auto& dir : subDirs) {
-            cout << dir->getDate() << "\t\t" << dir->getSize() << "\t" << dir->getName() << "\n";
-            totDirs++;
+        for (const auto& item : items) {
+            cout << item->getDate() << "\t\t" << item->getSize() << "\t" << item->getName() << "\n";
+            if (!item->isDirectory()) {
+                totFiles++;
+                totSize += stoi(item->getSize());
+            }
+            else {
+                totDirs++;
+            }
         }
-
-        for (const auto& file : files) {
-            cout << file->getDate() << "\t\t" << file->getSize() << "\t" << file->getName() << "\n";
-            totFiles++;
-            totSize += stoi(file->getSize());
-        }
-        
         cout << "   " << totFiles << " File(s)           " << totSize << " total bytes\n";
         cout << "   " << totDirs << " Dir(s) \n";
         sortedByName = false;
@@ -108,27 +102,24 @@ void executeCommand(const std::string& command, Directory items, std::string& pa
     }
 
     else if (cmd == "sortname") {
-        std::sort(subDirs.begin(), subDirs.end(), compareByName);
-        std::sort(files.begin(), files.end(), compareByName);
+        std::sort(items.begin(), items.end(), compareByName);
         __int64 totSize = 0;
         __int64 totFiles = 0;
         __int64 totDirs = 0;
-
-        for (const auto& dir : subDirs) {
-            cout << dir->getDate() << "\t\t" << dir->getSize() << "\t" << dir->getName() << "\n";
-            totDirs++;
+        for (const auto& item : items) {
+            cout << item->getDate() << "\t\t" << item->getSize() << "\t" << item->getName() << "\n";
+            if (!item->isDirectory()) {
+                totFiles++;
+                totSize += stoi(item->getSize());
+            }
+            else {
+                totDirs++;
+            }
         }
-
-        for (const auto& file : files) {
-            cout << file->getDate() << "\t\t" << file->getSize() << "\t" << file->getName() << "\n";
-            totFiles++;
-            totSize += stoi(file->getSize());
-        }
-
-        cout << "   " << totFiles << " File(s)           " << totSize << " total bytes\n";
-        cout << "   " << totDirs << " Dir(s) \n";
-        sortedByName = false;
-        sortedBySize = true;
+        cout << "\t" << totFiles << " File(s)\t" << totSize << " total bytes\n";
+        cout << "\t" << totDirs << " Dir(s) \n";
+        sortedBySize = false;
+        sortedByName = true;
     }
 
     else if (cmd == "cd") {
@@ -138,35 +129,31 @@ void executeCommand(const std::string& command, Directory items, std::string& pa
         }
 
         string targetDirectory = tokens[1];
-        filesystem::path newPath;
-
         if (targetDirectory == "..") {
             if (filesystem::path(path).has_parent_path()) {
-                newPath = filesystem::path(path).parent_path();
+                path = filesystem::path(path).parent_path().string();
                 cout << "Moved to parent directory." << endl;
             }
             else {
                 cout << "Already at the root directory." << endl;
-                return;
             }
         }
-        else if (targetDirectory == "\\") {
-            newPath = "."; // Root directory
+        if (targetDirectory == "\\") {
+            path = ".";
+
             cout << "Moved to the root directory." << endl;
         }
         else {
-            newPath = filesystem::absolute(filesystem::path(path) / targetDirectory);
-        }
-
-        if (filesystem::exists(newPath) && filesystem::is_directory(newPath)) {
-            path = newPath.string();
-            cout << "Moved to directory: " << path << endl;
-        }
-        else {
-            cout << "Directory does not exist: " << targetDirectory << endl;
+            filesystem::path newPath = filesystem::path(path) / targetDirectory;
+            if (filesystem::exists(newPath) && filesystem::is_directory(newPath)) {
+                path = newPath.string();
+                cout << "Moved to directory: " << path << endl;
+            }
+            else {
+                cout << "Directory does not exist: " << targetDirectory << endl;
+            }
         }
     }
-
 
     else if (cmd == "mkdir") {
         if (tokens.size() > 1) {
@@ -178,7 +165,7 @@ void executeCommand(const std::string& command, Directory items, std::string& pa
                     std::cout << "Directory '" << dirname << "' created successfully." << std::endl;
 
                     Directory* newDirItem = new Directory(dirname, true, "<DIR>", "");
-                    items.addSubDirectory(newDirItem); // Add the new directory item to the vector
+                    items.push_back(newDirItem);
                 }
                 else {
                     std::cout << "Failed to create directory '" << dirname << "'." << std::endl;
@@ -192,6 +179,7 @@ void executeCommand(const std::string& command, Directory items, std::string& pa
             std::cout << "Invalid command: mkdir requires a directory name." << std::endl;
         }
     }
+
     else if (cmd == "mkfile") {
         if (tokens.size() > 1) {
             std::string filename = tokens[1];
@@ -205,7 +193,7 @@ void executeCommand(const std::string& command, Directory items, std::string& pa
                     newFile.close();
                     std::cout << "File '" << filename << "' created successfully." << std::endl;
                     File* newFileItem = new File(filename, false, fileSize, "");
-                    items.addFile(newFileItem); // Add the new file item to the vector
+                    items.push_back(newFileItem);
                 }
                 else {
                     std::cout << "Failed to create file '" << filename << "'." << std::endl;
@@ -220,60 +208,23 @@ void executeCommand(const std::string& command, Directory items, std::string& pa
         }
     }
 
-
-
-
     else if (cmd == "del") {
         if (tokens.size() > 1) {
             std::string name = tokens[1];
 
-            // Check if the item exists in the current directory
-            bool found = false;
-            auto& subDirs = items.getSubDirectories(); // Get non-const reference to subDirectories vector
-            auto& files = items.getFiles(); // Get non-const reference to files vector
+            std::filesystem::path itemPath = std::filesystem::path(path) / name;
 
-            // Iterate over subdirectories
-            auto subDirIt = subDirs.begin();
-            while (subDirIt != subDirs.end()) {
-                if ((*subDirIt)->getName() == name) {
-                    delete* subDirIt; // Delete the directory object
-                    subDirIt = subDirs.erase(subDirIt); // Erase from the vector
-                    found = true;
+            if (std::filesystem::exists(itemPath)) {
+                std::error_code ec;
+                if (std::filesystem::remove(itemPath, ec)) {
+                    std::cout << "Deleted '" << name << "' successfully." << std::endl;
+
+                    items.erase(std::remove_if(items.begin(), items.end(), [&](const systemItem* item) {
+                        return item->getName() == name;
+                        }), items.end());
                 }
                 else {
-                    ++subDirIt;
-                }
-            }
-
-            // If not found in subdirectories, search in files
-            if (!found) {
-                auto fileIt = files.begin();
-                while (fileIt != files.end()) {
-                    if ((*fileIt)->getName() == name) {
-                        delete* fileIt; // Delete the file object
-                        fileIt = files.erase(fileIt); // Erase from the vector
-                        found = true;
-                    }
-                    else {
-                        ++fileIt;
-                    }
-                }
-            }
-
-            // Check if the item was found and deleted
-            if (found) {
-                std::filesystem::path itemPath = std::filesystem::path(path) / name;
-                if (std::filesystem::exists(itemPath)) {
-                    std::error_code ec;
-                    if (std::filesystem::remove(itemPath, ec)) {
-                        std::cout << "Deleted '" << name << "' successfully." << std::endl;
-                    }
-                    else {
-                        std::cout << "Failed to delete '" << name << "'. " << ec.message() << std::endl;
-                    }
-                }
-                else {
-                    std::cout << "Failed to find path for '" << name << "'." << std::endl;
+                    std::cout << "Failed to delete '" << name << "'. " << ec.message() << std::endl;
                 }
             }
             else {
@@ -283,10 +234,7 @@ void executeCommand(const std::string& command, Directory items, std::string& pa
         else {
             std::cout << "Invalid command: del requires a file or directory name." << std::endl;
         }
-        }
-
-
-
+    }
     else if (cmd == "help") {
         cout << "Commands:\n"
             << "dir - list the files and directories in the current directory\n"
@@ -306,7 +254,7 @@ void executeCommand(const std::string& command, Directory items, std::string& pa
     }
 
     if (cmd == "exit") {
-       cout << "Exiting the program." << endl;
+        cout << "Exiting the program." << endl;
     }
     else if (!sortedBySize && !sortedByName) {
 
