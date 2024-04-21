@@ -12,13 +12,14 @@
 #include "commands.h"
 #include "directories.h"
 #include "files.h"
+#include <sstream>
 
 using namespace std;
 
 // function prototype of a helper method to convert timestamps
 const tm convertTime(const filesystem::file_time_type& timestamp);
 
-void initializeItems(const std::string& path, Directory* currentDir) {
+void initializeItems(const string& path, Directory* currentDir) {
     try {
         for (const auto& item : filesystem::directory_iterator(path))
         {
@@ -27,9 +28,10 @@ void initializeItems(const std::string& path, Directory* currentDir) {
                 string name = item.path().filename().string();
                 tm timestamp = convertTime(item.last_write_time());
 
-                string dateTime = to_string(timestamp.tm_mday) + "/" + to_string(timestamp.tm_mon + 1) + "/" + to_string(timestamp.tm_year + 1900) + " " + to_string(timestamp.tm_hour) + ":" + to_string(timestamp.tm_min);
+                stringstream dateTime;
+                dateTime << put_time(&timestamp, "%d/%m/%Y %H:%M");
 
-                Directory* dirItem = new Directory(name, true, " <DIR> ", dateTime);
+                Directory* dirItem = new Directory(name, true, "<DIR>", dateTime.str());
                 currentDir->addSubDirectory(dirItem);
             }
             else
@@ -37,12 +39,13 @@ void initializeItems(const std::string& path, Directory* currentDir) {
                 string tmp = item.path().filename().string();
                 const char* name = tmp.c_str();
                 tm timestamp = convertTime(item.last_write_time());
-                string dateTime = to_string(timestamp.tm_mday) + "/" + to_string(timestamp.tm_mon + 1) + "/" + to_string(timestamp.tm_year + 1900) + " " + to_string(timestamp.tm_hour) + ":" + to_string(timestamp.tm_min);
+                stringstream dateTime;
+                dateTime << put_time(&timestamp, "%d/%m/%Y %H:%M");
 
                 __int64 filesize = item.file_size();
                 string size = to_string(filesize);
 
-                File* fileItem = new File(name, false, size, dateTime);
+                File* fileItem = new File(name, false, size, dateTime.str());
                 currentDir->addFile(fileItem);
             }
         }
@@ -74,12 +77,12 @@ int main()
 
     while (true) {
         std::string userInput;
-        std::cout << rootPath << " :> ";
+        std::cout << rootPath << ":> ";
         std::getline(std::cin, userInput);
 
-        std::vector<Directory*> items;
+        std::vector<systemItem*> items;
 
-        executeCommand(userInput, items, rootPath);
+        executeCommand(userInput, items, rootPath, rootDir);
 
 
         if (userInput == "exit") {

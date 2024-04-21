@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include "systemItem.h"
+#include "files.h"
 
 using namespace std;
 
@@ -12,18 +13,25 @@ public:
     bool isDirectory() const override { return isDir; }
     string getSize() const override { return size; }
     string getDate() const override { return date; }
-    void addSubDirectory(Directory* directory) {
-        subDirectories.push_back(directory);
+    void addSubDirectory(Directory* directory);
+    void addFile(File* file);
+    const vector<Directory*>& getSubDirectories() const;
+    const vector<systemItem*>& getFiles() const;
+    vector<systemItem*> getItems() const;
+    void removeItem(const vector<systemItem*>& item);
+    void setItems(const vector<systemItem*>& newItems);
+    string getPath() const {
+        if (parent == nullptr) {
+            return name; // This is the root directory
+        }
+        else {
+            return parent->getPath() + "\\" + name; // Concatenate parent's path with the directory name
+        }
     }
-    void addFile(systemItem* file) {
-        files.push_back(file);
+    Directory* getParentDir() {
+        return parent;
     }
-    const vector<Directory*>& getSubDirectories() const {
-        return subDirectories;
-    }
-    const vector<systemItem*>& getFiles() const {
-        return files;
-    }
+
 private:
     string name;
     bool isDir;
@@ -31,4 +39,6 @@ private:
     string date;
     vector<Directory*> subDirectories;
     vector<systemItem*> files;
+    vector<systemItem*> items;
+    Directory* parent;
 };
