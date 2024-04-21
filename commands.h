@@ -4,7 +4,10 @@
 #include <string>
 #include <vector>
 #include "systemItem.h"
+#include "Directories.h"
+
+using namespace std;
 
 // Function prototypes
-void executeCommand(const std::string& command, std::vector<systemItem*>& items, std::string& path);
+void executeCommand(const string& command, vector<systemItem*>& items, string& path, Directory*& currDir);
 
