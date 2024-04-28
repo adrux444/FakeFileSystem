@@ -130,9 +130,10 @@ void sortName(vector<systemItem*>& items) {
 }
 
 
-void executeCommand(const string& command, vector<systemItem*>& items, string& path, Directory*& currDir) {
+void executeCommand(const string& command, vector<systemItem*>& items, string& path, Directory*& currDir, systemItem*& constant) {
     istringstream iss(command);
     vector<string> tokens{ istream_iterator<string>{iss}, istream_iterator<string>{} };
+
     currDir->setItems(items);
     bool sortedBySize = false;
     bool sortedByName = false;
@@ -156,7 +157,7 @@ void executeCommand(const string& command, vector<systemItem*>& items, string& p
 
         }
         for (const auto& item : uniqueItems) {
-            cout << item->getDate() << "\t\t" << item->getSize() << "\t" << item->getName() << "\n";
+            cout << *item;
             if (!item->isDirectory()) {
                 totFiles++;
                 totSize += stoi(item->getSize());
@@ -196,14 +197,14 @@ void executeCommand(const string& command, vector<systemItem*>& items, string& p
             Directory* parentDir = currDir->getParentDir();
             if (parentDir) {
                 path = parentDir->getPath();
-                currDir = parentDir; 
+                currDir = parentDir;
             }
             else {
                 cout << "Cannot move further up from the root directory." << endl;
             }
         }
         if (targetDirectory == "\\") {
-            
+
             while (currDir->getParentDir() != nullptr)
             {
                 currDir = currDir->getParentDir();
@@ -231,8 +232,8 @@ void executeCommand(const string& command, vector<systemItem*>& items, string& p
     else if (cmd == "mkdir") {
         if (tokens.size() > 1) {
             string dirname = tokens[1];
-
             bool newDir = true;
+
             for (const auto& item : currDir->getItems()) {
                 if (item->isDirectory() && item->getName() == dirname) {
                     newDir = false;
@@ -309,6 +310,37 @@ void executeCommand(const string& command, vector<systemItem*>& items, string& p
         }
     }
 
+    else if (cmd == "save") {
+        ofstream file("store.txt");
+        if (file.is_open()) {
+            // Save commands
+            for (const auto& item : constant->loadCommand()) {
+                file << item << endl;
+            }
+            cout << "Saved to 'store.txt'" << endl;
+            file.close();
+        }
+        else {
+            cout << "Error: Can't find file" << endl;
+        }
+    }
+
+    else if (cmd == "load") {
+        ifstream file("store.txt");
+        if (file.is_open()) {
+            string line;
+            while (getline(file, line) && line.length() > 0 && line != "dir" && line != "help") {
+                executeCommand(line, items, path, currDir, constant);
+            }
+            cout << "Restored from 'store.txt'" << endl;
+            file.close();
+        }
+        else {
+            cout << "Error: Can't find file" << endl;
+        }
+    }
+
+
     else if (cmd == "help") {
         cout << "Commands:\n"
             << "dir - list the files and directories in the current directory\n"
@@ -334,5 +366,8 @@ void executeCommand(const string& command, vector<systemItem*>& items, string& p
 
         initializeItems(path, currDir);
     }
+
+    constant->storeCommand(command);
+
 
 }
