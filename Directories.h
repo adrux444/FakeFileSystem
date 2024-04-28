@@ -20,12 +20,13 @@ public:
     vector<systemItem*> getItems() const;
     void removeItem(const vector<systemItem*>& item);
     void setItems(const vector<systemItem*>& newItems);
+    
     string getPath() const {
         if (parent == nullptr) {
-            return name; // This is the root directory
+            return name; 
         }
         else {
-            return parent->getPath() + "\\" + name; // Concatenate parent's path with the directory name
+            return parent->getPath() + "\\" + name; 
         }
     }
     Directory* getParentDir() {

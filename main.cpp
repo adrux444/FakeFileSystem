@@ -23,7 +23,7 @@ void initializeItems(const string& path, Directory* currentDir) {
     try {
         for (const auto& item : filesystem::directory_iterator(path))
         {
-            if (item.is_directory()) // check if this is a directory
+            if (item.is_directory()) 
             {
                 string name = item.path().filename().string();
                 tm timestamp = convertTime(item.last_write_time());
@@ -70,6 +70,7 @@ int main()
     // root path to enumerate
     string rootPath = ".";
     Directory* rootDir = new Directory(rootPath, true, " <DIR> ", "");
+    systemItem* constant = rootDir;
     cout << "Starting initialisation, please wait ...\n";
 
     initializeItems(rootPath, rootDir);
@@ -82,7 +83,7 @@ int main()
 
         std::vector<systemItem*> items;
 
-        executeCommand(userInput, items, rootPath, rootDir);
+        executeCommand(userInput, items, rootPath, rootDir, constant);
 
 
         if (userInput == "exit") {

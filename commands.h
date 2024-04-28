@@ -8,6 +8,5 @@
 
 using namespace std;
 
-// Function prototypes
-void executeCommand(const string& command, vector<systemItem*>& items, string& path, Directory*& currDir);
+void executeCommand(const string& command, vector<systemItem*>& items, string& path, Directory*& currDir, systemItem*& constant);
 

@@ -4,8 +4,7 @@
 
 using namespace std;
 
-class File :
-    public systemItem
+class File : public systemItem
 {
 public:
     File(const string& name, bool isDir, const string& size, const string& date);
