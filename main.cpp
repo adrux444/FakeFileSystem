@@ -1,13 +1,8 @@
-/*
- * This is the starting project for the Advanced Programming assessment - 2023-4
- * This project enumerates just the directory specified and does not descend into subdirectories
-*/
-
 #include <crtdbg.h>
 #include <stdlib.h>
 #include <iostream>
 #include <chrono>
-#include <filesystem>  // file system needs cpp standard 17 or above.  This is enabled in this project, but if you recreated from scratch, set -std=c++17 flags
+#include <filesystem> 
 #include "systemItem.h"
 #include "commands.h"
 #include "directories.h"
@@ -63,7 +58,6 @@ void initializeItems(const string& path, Directory* currentDir) {
 int main()
 {
 #ifdef _DEBUG
-    // make sure we are checking for memory leaks when the application ends, but only in the _DEBUG variant
     _onexit(_CrtDumpMemoryLeaks);
 #endif
 
@@ -93,11 +87,9 @@ int main()
 }
 
 
-// we need to do a little conversion between what the filesystem returns for time stamps and something usable
-// just use this function and don't worry about how it works
 const tm convertTime(const filesystem::file_time_type& timestamp)
 {
-    using namespace chrono;  // just for this function, use chrono to save us prefixing chrono:: everywhere
+    using namespace chrono;
     system_clock::time_point delta = time_point_cast<system_clock::duration>(timestamp - filesystem::file_time_type::clock::now() + system_clock::now());
     time_t conversion = system_clock::to_time_t(delta);
 
